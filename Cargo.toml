@@ -1,0 +1,18 @@
+[package]
+name = "wikigraph"
+version = "0.1.0"
+authors = ["Franz Miltz <franz@miltz.me>"]
+edition = "2018"
+
+[lib]
+name = "wglib"
+path = "src/lib.rs"
+
+[[bin]]
+name = "wikigraph"
+path = "src/main.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[dependencies]
+reqwest = { version = "0.10", features = ["blocking", "json"] }
+thiserror = "1.0"
