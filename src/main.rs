@@ -1,6 +1,6 @@
 use std::env;
 use std::process;
-use wglib::Config;
+use wglib::config::Config;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
