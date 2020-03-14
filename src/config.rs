@@ -25,8 +25,8 @@ pub struct Config {
 }
 
 impl Config {
-    /// Given an array of (command-line) arguments this function creates a fitting
-    /// configurations file.
+    /// Given an iterator over the command line arguments, this will return
+    /// an appropriate config struct.
     ///
     /// Excatly two arguments are expected, otherwise an error is returned.
     /// - An integer containing the desired search depth.
@@ -57,8 +57,7 @@ impl Config {
     /// Articles have to be on separate lines and follow the criteria specified in the scraper module.
     fn get_urls(path: &String) -> Result<Vec<URL>, Box<dyn Error>> {
         let contents = fs::read_to_string(path)?;
-        let lines = contents.lines();
-        let valid_urls = URL::new_list(lines);
+        let valid_urls = URL::new_list(contents.lines());
         if valid_urls.len() == 0 {
             return Err(Box::new(ConfigErr::NoValidUrls));
         }
