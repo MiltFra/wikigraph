@@ -1,5 +1,6 @@
 use super::*;
 use std::error::Error;
+use std::str;
 use thiserror::Error;
 
 /// Contains the prefix that is used to identify Wikipedia articles.
@@ -25,32 +26,57 @@ pub enum URLErr {
 }
 
 /// An alias for String representing a URL to a valid Wikipedia article.
+#[derive(Debug)]
 pub struct URL(String);
 
 impl URL {
-    pub fn new(url: &str) -> Result<URL, Box<dyn Error>> {
-        URL::validate(url)?;
-        Ok(URL(String::from(url)))
+    /// The constructor checks whether a given string is actually a valid URL
+    /// to a Wikipedia article and then converts this string into a new URL struct
+    /// containing a clone of the string without the `WIKI_ARTICLE_PREFIX`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use wglib::URL;
+    ///
+    /// let myUrl = URL::new("https://en.wikipedia.org/wiki/Wikipedia").unwrap();
+    /// let myUrl = URL::new("https://de.wikipedia.org/wiki/Wikipedia").unwrap_err();
+    /// let myUrl = URL::new("https://en.wikipedia.org/wiki/Wikipedia:Contact_us").unwrap_err();
+    /// ```
+    pub fn new(url: &str) -> Result<Self, Box<dyn Error>> {
+        Ok(URL(String::from(URL::extract_body(url)?)))
     }
 
-    // TODO: Use closures and iterators to make this more functional and idiomatic.
-    pub fn new_list(lines: std::str::Lines) -> Vec<URL> {
-        let mut valid_urls = Vec::new();
-        for addr in lines {
-            let addr = addr.trim().trim_end_matches('\n');
-            let res = URL::new(addr);
-            match res {
-                Err(e) => {
-                    eprintln!("Found invalid URL ({}): {}", addr, e);
-                    continue;
-                }
-                Ok(url) => valid_urls.push(url),
-            }
-        }
-        valid_urls
+    /// Given an iterator over possibly valid URLs of Wikipedia articles this function
+    /// returns precisely those that are valid as URL structs.
+    ///
+    /// This process is stable, i.e. it preserves the input order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use wglib::URL;
+    /// let contents = String::from(
+    ///     "https://en.wikipedia.org/wiki/Wikipedia\n\
+    ///     https://de.wikipedia.org/wiki/Wikipedia\n\
+    ///     https://en.wikipedia.org/wiki/Wikipedia:Contact_us"
+    /// );
+    ///
+    /// let my_list = URL::new_list(&contents);
+    ///
+    /// assert_eq!(my_list.len(), 1);
+    /// assert_eq!(my_list[0].to_string(), "https://en.wikipedia.org/wiki/Wikipedia");
+    /// ```
+    pub fn new_list(contents: &String) -> Vec<URL> {
+        contents.lines().filter_map(|x| URL::new(x).ok()).collect()
     }
 
-    fn validate(url: &str) -> Result<(), Box<dyn Error>> {
+    /// Validates that a given string does actually correspond to a valid Wikipedia
+    /// article. Here we're only considering proper articles, not meta sites like
+    /// the homepage.
+    ///
+    /// Then the body (the part after `WIKI_ARTICLE_PREFIX`) is returned.
+    fn extract_body(url: &str) -> Result<&str, Box<dyn Error>> {
         if !url.starts_with(WIKI_ARTICLE_PREFIX) {
             return Err(Box::new(URLErr::MissingPrefix));
         }
@@ -62,11 +88,39 @@ impl URL {
                 ))));
             }
         }
-        Ok(())
+        Ok(url)
     }
 
+    /// Reverts the actions of `URL::new()`. We get the `String` that is
+    /// contained within the `URL` struct back. At least a clone of it.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use wglib::URL;
+    ///
+    /// let myUrl = URL::new("https://en.wikipedia.org/wiki/Help!_(film)").unwrap();
+    ///
+    /// assert_eq!(myUrl.to_string(), "https://en.wikipedia.org/wiki/Help!_(film)");
+    /// ```
     pub fn to_string(&self) -> String {
-        return self.0.clone();
+        format!("{}{}", WIKI_ARTICLE_PREFIX, self.0)
+    }
+
+    /// Makes the suffix part of the URL human readable by replacing
+    /// underscores with spaces.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use wglib::URL;
+    ///
+    /// let myUrl = URL::new("https://en.wikipedia.org/wiki/Help!_(film)").unwrap();
+    ///
+    /// assert_eq!(myUrl.get_name(), "Help! (film)");
+    /// ```
+    pub fn get_name(&self) -> String {
+        str::replace(&self.0, "_", " ")
     }
 }
 
@@ -76,17 +130,17 @@ mod tests {
 
     #[test]
     fn is_wikipedia_article_valid() -> Result<(), Box<dyn Error>> {
-        URL::validate("https://en.wikipedia.org/wiki/Wikipedia")?;
-        URL::validate("https://en.wikipedia.org/wiki/Help!_(film)")?;
+        URL::extract_body("https://en.wikipedia.org/wiki/Wikipedia")?;
+        URL::extract_body("https://en.wikipedia.org/wiki/Help!_(film)")?;
         Ok(())
     }
 
     #[test]
     fn is_wikipedia_article_invalid() {
-        if let Ok(_) = URL::validate("https://en.wikipedia.org/wiki/Help:Contents") {
+        if let Ok(_) = URL::extract_body("https://en.wikipedia.org/wiki/Help:Contents") {
             panic!("Test1 failed.");
         }
-        if let Ok(_) = URL::validate("https://en.wikipedia.org/wiki/Wikipedia:Contact_us") {
+        if let Ok(_) = URL::extract_body("https://en.wikipedia.org/wiki/Wikipedia:Contact_us") {
             panic!("Test 2 failed.")
         }
     }
