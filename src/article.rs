@@ -7,6 +7,12 @@ use thiserror::Error;
 /// the URL, the Head Line, related articles, etc.
 pub struct Article {}
 
+/// ArticleErr is an enum that contains possible error values that
+/// could occur during the creation of a new Article in Article::new.
+///
+/// Keep in mind that this includes a lot of I/O operation.
+pub enum ArticleErr {}
+
 impl Article {
     pub async fn get(client: reqwest::Client, url: url::URL) -> Result<Article, Box<dyn Error>> {
         let body = client.get(&url.to_string()).send().await?;
@@ -19,6 +25,6 @@ impl Article {
         client: reqwest::Client,
         urls: Vec<url::URL>,
     ) -> Result<Vec<Article>, Box<dyn Error>> {
-        Ok(Vec::new())    
+        Ok(Vec::new())
     }
 }
