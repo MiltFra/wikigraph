@@ -1,6 +1,9 @@
 use std::error::Error;
-use config::Config;
 use reqwest;
+
+pub use config::{Config, ConfigErr};
+pub use article::{Article, ArticleErr};
+pub use url::{URL, URLErr};
 
 pub mod article;
 pub mod url;
