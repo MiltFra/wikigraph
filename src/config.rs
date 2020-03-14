@@ -6,16 +6,22 @@ use thiserror::Error;
 /// could occur during the Configuration of this library in Config::new.
 #[derive(Error, Debug)]
 pub enum ConfigErr {
-    //#[error("Found too many arguments. (expected: 2)")]
-    //TooManyArguments,
+    /// This error is returned when there are less arguments in the
+    /// given iterator, than expected.
     #[error("Found too few arguments. (expected: 2)")]
     TooFewArguments,
+    /// This error is returned when the given argument corresponding
+    /// to the search depth could not be parsed into the appropriate number type.
     #[error("Could not parse search depth. (found {0})")]
     IntParseError(String),
+    /// This error is returned when the given file does not contain *any* valid urls.
+    /// 
+    /// If there are some invalid URLs, those will just be discarded, but at least one
+    /// starting point is required.
     #[error("Found no valid urls in the file.")]
     NoValidUrls,
 }
-/// Config is a struct used to bundle all the possible configurations
+/// Config is a struct used to encapsulate all the possible configurations
 /// for the wikigraph library.
 pub struct Config {
     /// Contains a list of URLs to valid Wikipedia articles.
