@@ -63,7 +63,7 @@ impl Config {
     /// Articles have to be on separate lines and follow the criteria specified in the scraper module.
     fn get_urls(path: &String) -> Result<Vec<URL>, Box<dyn Error>> {
         let contents = fs::read_to_string(path)?;
-        let valid_urls = URL::new_list(contents.lines());
+        let valid_urls = URL::new_list(&contents);
         if valid_urls.len() == 0 {
             return Err(Box::new(ConfigErr::NoValidUrls));
         }
