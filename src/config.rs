@@ -37,7 +37,7 @@ impl Config {
     /// Excatly two arguments are expected, otherwise an error is returned.
     /// - An integer containing the desired search depth.
     /// - A file name containing the starting URLs.
-    pub fn new(mut args: std::env::Args) -> Result<Config, Box<dyn Error>> {
+    pub fn new(mut args: std::env::Args) -> Result<Self, Box<dyn Error>> {
         // Dropping the name of the executable.
         args.next();
         // Parsing the depth.
