@@ -3,19 +3,6 @@ use std::error::Error;
 use std::str;
 use thiserror::Error;
 
-/// Contains the prefix that is used to identify Wikipedia articles.
-///
-/// Any wikipedia article must therefore be of the form
-/// "<WIKI_ARTICLE_PREFIX><ARTICLE_NAME>".
-pub const WIKI_ARTICLE_PREFIX: &str = "https://en.wikipedia.org/wiki/";
-
-/// Contains prefixes of webpages that are not considered Wikipedia articles.
-///
-/// Any url of the form "<WIKI_ARTICLE_PREFIX><BLACKLIST_ELEMENT><REST>",
-/// where BLACKLIST_ELEMENT is one of the elements in this array and
-/// REST is the possibly empty rest of the string, is therefore invalid.
-pub const WIKI_ARTICLE_BLACKLIST: [&str; 4] = ["Main_Page", "Help:", "Wikipedia:", "Special:"];
-
 /// Contains possible errors that may occur when trying to create a URL.
 #[derive(Error, Debug)]
 pub enum URLErr {
@@ -23,10 +10,12 @@ pub enum URLErr {
     MissingPrefix,
     #[error("Blacklisted article prefix found. ({0})")]
     BlacklistedPrefix(String),
+    #[error("Blacklisted article suffix found. ({0})")]
+    BlacklistedSuffix(String),
 }
 
 /// An alias for String representing a URL to a valid Wikipedia article.
-#[derive(Debug)]
+#[derive(Debug, Hash, Eq, PartialEq, Clone)]
 pub struct URL(String);
 
 impl URL {
@@ -76,19 +65,30 @@ impl URL {
     /// the homepage.
     ///
     /// Then the body (the part after `WIKI_ARTICLE_PREFIX`) is returned.
-    fn extract_body(url: &str) -> Result<&str, Box<dyn Error>> {
-        if !url.starts_with(WIKI_ARTICLE_PREFIX) {
-            return Err(Box::new(URLErr::MissingPrefix));
+    fn extract_body(mut url: &str) -> Result<&str, Box<dyn Error>> {
+        if let Some(s) = url.strip_prefix(WIKI_DOMAIN) {
+            url = s;
         }
-        let url = url.trim_start_matches(WIKI_ARTICLE_PREFIX);
-        for blacklisted in WIKI_ARTICLE_BLACKLIST.iter() {
+        match url.strip_prefix(WIKI_ARTICLE_PREFIX) {
+            Some(s) => url = s,
+            None => return Err(Box::new(URLErr::MissingPrefix)),
+        }
+        for blacklisted in WIKI_ARTICLE_PREFIX_BLACKLIST.iter() {
             if url.starts_with(blacklisted) {
                 return Err(Box::new(URLErr::BlacklistedPrefix(String::from(
                     *blacklisted,
                 ))));
             }
         }
-        Ok(url)
+        for blacklisted in WIKI_ARTICLE_SUFFIX_BLACKLIST.iter() {
+            if url.ends_with(blacklisted) {
+                return Err(Box::new(URLErr::BlacklistedSuffix(String::from(
+                    *blacklisted,
+                ))));
+            }
+        }
+        let mut parts = url.split('#');
+        Ok(parts.next().unwrap())
     }
 
     /// Reverts the actions of `URL::new()`. We get the `String` that is
@@ -104,7 +104,7 @@ impl URL {
     /// assert_eq!(myUrl.to_string(), "https://en.wikipedia.org/wiki/Help!_(film)");
     /// ```
     pub fn to_string(&self) -> String {
-        format!("{}{}", WIKI_ARTICLE_PREFIX, self.0)
+        format!("{}{}{}", WIKI_DOMAIN, WIKI_ARTICLE_PREFIX, self.0)
     }
 
     /// Makes the suffix part of the URL human readable by replacing
