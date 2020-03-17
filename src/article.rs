@@ -1,6 +1,5 @@
 use super::*;
 use futures;
-use regex::Regex;
 use reqwest;
 use std::collections::HashSet;
 use std::collections::{HashMap, VecDeque};
