@@ -105,3 +105,5 @@ impl Collector {
         Ok(Article::parse(url.clone(), r.text().await?)?)
     }
 }
+
+// TODO: Write tests
