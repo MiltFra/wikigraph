@@ -89,7 +89,7 @@ impl Collector {
         Collector {
             cache: HashMap::new(),
             processed: 0,
-            work_queue: VecDeque::new(),
+            work_queue: VecDeque::new(), // Currently unused...
             client: reqwest::Client::new(),
         }
     }
@@ -99,8 +99,33 @@ impl Collector {
         if let Some(a) = self.cache.get(url) {
             return Ok(a.clone());
         }
+        // TODO: Include better error messages.
         let r = self.client.get(&url.to_string()).send().await?;
-        Ok(Article::parse(url.clone(), r.text().await?)?)
+        let a = Article::parse(url.clone(), r.text().await?)?;
+        self.cache.insert(url.clone(), a.clone());
+        Ok(a)
+    }
+}
+
+mod tests {
+    use super::{Collector, URL};
+    use std::error::Error;
+
+    #[test]
+    fn collect_is_deterministic() -> Result<(), Box<dyn Error>> {
+        let mut runtime = tokio::runtime::Builder::new()
+            .basic_scheduler()
+            .threaded_scheduler()
+            .enable_all()
+            .build()
+            .unwrap();
+        let u = URL::new("https://en.wikipedia.org/wiki/Wikipedia")?;
+        let mut c = Collector::new();
+        let r = runtime.block_on(c.get(&u))?;
+        for _ in 0..100 {
+            assert_eq!(runtime.block_on(c.get(&u))?, r);
+        }
+        Ok(())
     }
 }
 
