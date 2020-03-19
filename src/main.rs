@@ -1,7 +1,5 @@
-use futures::executor::block_on;
 use std::env;
 use std::process;
-use tokio::prelude::*;
 use wglib::config::Config;
 
 #[tokio::main]

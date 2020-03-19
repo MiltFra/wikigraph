@@ -1,10 +1,8 @@
 use super::*;
-use futures;
 use reqwest;
 use std::collections::HashSet;
 use std::collections::{HashMap, VecDeque};
 use std::error::Error;
-use std::sync::mpsc;
 use thiserror::Error;
 
 /// A struct representing a Wikipedia article with attributes like
