@@ -1,9 +1,6 @@
 use super::*;
-use core::pin::Pin;
-use futures::stream::futures_unordered::FuturesUnordered;
-use futures::stream::Stream;
 use reqwest;
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use thiserror::Error;
 
