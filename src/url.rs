@@ -73,13 +73,16 @@ impl URL {
             Some(s) => url = s,
             None => return Err(Box::new(URLErr::MissingPrefix)),
         }
-        for blacklisted in WIKI_ARTICLE_PREFIX_BLACKLIST.iter() {
-            if url.starts_with(blacklisted) {
-                return Err(Box::new(URLErr::BlacklistedPrefix(String::from(
-                    *blacklisted,
-                ))));
-            }
+        if url.contains(":") {
+            return Err(Box::new(URLErr::BlacklistedPrefix(String::from(""))));
         }
+        //for blacklisted in WIKI_ARTICLE_PREFIX_BLACKLIST.iter() {
+        //    if url.starts_with(blacklisted) {
+        //        return Err(Box::new(URLErr::BlacklistedPrefix(String::from(
+        //            *blacklisted,
+        //        ))));
+        //    }
+        //}
         for blacklisted in WIKI_ARTICLE_SUFFIX_BLACKLIST.iter() {
             if url.ends_with(blacklisted) {
                 return Err(Box::new(URLErr::BlacklistedSuffix(String::from(

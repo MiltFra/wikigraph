@@ -15,14 +15,15 @@ pub const WIKI_DOMAIN: &str = "https://en.wikipedia.org";
 /// Any url of the form "<WIKI_ARTICLE_PREFIX><BLACKLIST_ELEMENT><REST>",
 /// where BLACKLIST_ELEMENT is one of the elements in this array and
 /// REST is the possibly empty rest of the string, is therefore invalid.
-pub const WIKI_ARTICLE_PREFIX_BLACKLIST: [&str; 7] = [
-    "Category",
+pub const WIKI_ARTICLE_PREFIX_BLACKLIST: [&str; 8] = [
+    "Category:",
     "Talk:",
     "Main_Page",
     "Help:",
     "Wikipedia:",
     "Special:",
     "File:",
+    "Portal:"
 ];
 
 pub const WIKI_ARTICLE_SUFFIX_BLACKLIST: [&str; 1] = ["_(disambiguation)"];
