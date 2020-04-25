@@ -51,9 +51,9 @@ pub enum ConfigErr {
 /// for the wikigraph library.
 pub struct Config {
     /// Contains a list of URLs to valid Wikipedia articles.
-    urls: Vec<URL>,
+    pub urls: Vec<URL>,
     /// Contains the depth for the search in the Wikipedia graph.
-    depth: u32,
+    pub depth: u32,
 }
 
 impl Config {
@@ -64,7 +64,7 @@ impl Config {
     /// - An integer containing the desired search depth.
     /// - A file name containing the starting URLs.
     pub fn new(mut args: std::env::Args) -> Result<Self, Box<dyn Error>> {
-        println!("Creating config");
+        eprintln!("Creating config");
         // Dropping the name of the executable.
         args.next();
         // Parsing the depth.
@@ -93,7 +93,7 @@ impl Config {
     /// Filters all the valid Wikipedia articles from a given String.
     /// Articles have to be on separate lines and follow the criteria specified in the scraper module.
     fn get_urls(path: &String) -> Result<Vec<URL>, Box<dyn Error>> {
-        println!("Parsing URLs");
+        eprintln!("Parsing URLs");
         let contents = fs::read_to_string(path)?;
         let valid_urls = URL::new_list(&contents);
         if valid_urls.len() == 0 {

@@ -21,10 +21,9 @@ pub async fn run(cfg: Config) -> Result<(), Box<dyn Error>> {
     println!("Creating collector");
     let mut collector = Collector::new();
     println!("Iterating URLs");
-    for url in cfg.iter_urls() {
-        println!("Current URL: {}", url.to_string());
-        let resp = collector.get(url).await;
-        println!("{:?}", resp);
+    for url in cfg.urls {
+        let n = collector.get_neighbourhood(&url, cfg.depth).await?;
+        println!("{:?}", n);
     }
     Ok(())
 }
