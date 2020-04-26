@@ -15,7 +15,7 @@ pub enum URLErr {
 }
 
 /// An alias for String representing a URL to a valid Wikipedia article.
-#[derive(Debug, Hash, Eq, PartialEq, Clone)]
+#[derive(Debug, Hash, Eq, PartialEq, Clone, PartialOrd, Ord)]
 pub struct URL(String);
 
 impl URL {

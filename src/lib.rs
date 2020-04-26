@@ -17,13 +17,25 @@ pub mod url;
 /// graph around a certain set of Wikipedia articles and possibly the shortest
 /// paths between them.
 pub async fn run(cfg: Config) -> Result<(), Box<dyn Error>> {
-    // TODO: Implement running logic.
-    println!("Creating collector");
     let mut collector = Collector::new();
-    println!("Iterating URLs");
-    for url in cfg.urls {
-        let n = collector.get_neighbourhood(&url, cfg.depth).await?;
-        println!("{:?}", n);
+    for x in cfg.urls.iter() {
+        for y in cfg.urls.iter() {
+            if *x == *y {
+                continue;
+            }
+            let path: Vec<_> = collector
+                .get_path(x, y)
+                .await?
+                .into_iter()
+                .map(|x| x.get_url().get_name()).collect();
+            eprintln!(
+                "Found path from {} to {} of length {}",
+                x.get_name(),
+                y.get_name(),
+                path.len()
+            );
+            println!("{:?}", path);
+        }
     }
     Ok(())
 }
