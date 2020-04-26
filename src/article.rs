@@ -100,6 +100,9 @@ impl Collector {
         }
     }
 
+    /// Takes a single URL and gets the corresponding articles. If this article has
+    /// been looked up before (by this particular object) the result is retreived from
+    /// a to limit the number of GET requests this program produces.
     pub async fn get(&mut self, url: &URL) -> Result<Article, Box<dyn Error>> {
         self.processed += 1;
         if let Some(a) = self.cache.get(url) {
@@ -110,10 +113,15 @@ impl Collector {
         Ok(a)
     }
 
+    /// A function to retrieve the HTML for a specific article by creating a HTTP get request.
+    /// The text is then parsed and a new Article object is created.
+    ///
+    /// Errors that can occur are mostly out of the users control as they are either related
+    /// to the I/O actions or to the content of the Wikipedia article which might not be possible
+    /// to parse. If this happens, the source code needs to be changed.
     async fn get_uncached(&self, url: &URL) -> Result<Article, Box<dyn Error>> {
         let r = self.client.get(&url.to_string()).send().await?;
         let a = Article::parse(url.clone(), r.text().await?)?;
-        //eprintln!("{:?} (Refs: {})", a.url, a.references.len());
         println!("{}", a.url.to_string());
         Ok(a)
     }
@@ -140,6 +148,9 @@ impl Collector {
     /// Takes a vector of URLs and gets the corresponding articles. Note that the resulting
     /// Vec<Article> is not guranteed to have the results in the same order as the given Vec<URL>.
     ///
+    /// This function does make havy use of concurrency as the futures are obtained from Collector::get
+    /// for each and every URL and then they are joined and awaited. This leads to better usage of the
+    /// downtime due to I/O operations.
     pub async fn get_list(&mut self, urls: &Vec<URL>) -> Result<Vec<Article>, Box<dyn Error>> {
         eprint!("Getting list of {} urls... ", urls.len());
         self.processed += urls.len();
@@ -171,6 +182,8 @@ impl Collector {
         Ok(ys)
     }
 
+    /// Gets all the neighbours of up to a given degree.
+    /// All values for the depth are valid as degree 0 means no neighbours are actually looked up.
     pub async fn get_neighbourhood(
         &mut self,
         url: &URL,
@@ -190,12 +203,10 @@ impl Collector {
             let urls = ts.into_iter().collect();
             let arts = self.get_list(&urls).await?;
             let mut new_ts = HashSet::new();
-            //eprintln!("Iterating over {} articles", arts.len());
             for a in arts {
                 for u in a.references.iter().cloned() {
-                for u in a.get_refs().into_iter() {
                     if ns.insert(u.clone()) {
-                        // We only need to fetch this value if we've not seen it before.
+                        // We only need to fetch this value if we've not seen it before.very
                         new_ts.insert(u);
                     }
                 }
@@ -205,6 +216,9 @@ impl Collector {
         }
         self.get_list(&ns.into_iter().collect()).await
     }
+
+    /// Given two URLs to valid Wikipedia articles this allows to find a chain of articles that
+    /// connects the two inputs by references.
     pub async fn get_path(&mut self, og: &URL, tg: &URL) -> Result<Vec<Article>, Box<dyn Error>> {
         let mut ts = HashSet::new(); // "Unhandled URLs"
         let mut ns = HashSet::new(); // Encountered URLs
@@ -224,6 +238,14 @@ impl Collector {
         }
         self.find_path(og, tg, ns.into_iter().collect()).await
     }
+
+    /// Given a neighbourhood (i.e. a set, or rather a Vector, of URLs that are guranteed to contain a path between og and tg)
+    /// the path is found. It is extremely important that the given neighbourhood does indeed contain the desired path, otherwise the code may panic.
+    ///
+    /// # Panics
+    ///
+    /// 1. If the given set of nodes does not contain a valid path from og to tg.
+    /// 2. If either og or tg is not in the given set.
     async fn find_path(
         &mut self,
         og: &URL,
@@ -268,6 +290,13 @@ impl Collector {
         Ok(path)
     }
 }
+
+/// A simplified (but naive) version of Dijkstra's algorithm to find a path in a directed graph
+/// given by an adjacency matrix without edge weights.
+///
+/// The main advantage of these constraints is that the first distance that is determined for any
+/// single node is guranteed to be the shortest distance as all the edges have the same length and
+/// any other node is at least as many steps away from the origin.
 fn binary_dijkstra(adj: &Vec<bool>, l: usize, og: usize, tg: usize) -> Option<Vec<usize>> {
     if og >= l || tg >= l {
         return None;
@@ -308,6 +337,10 @@ fn binary_dijkstra(adj: &Vec<bool>, l: usize, og: usize, tg: usize) -> Option<Ve
     Some(path)
 }
 
+/// Returns the indices of the neighbours for any node in a graph given by and adjacency matrix.
+///
+/// This function is potentially unsafe as it does not check the size of the adjacency matrix and
+/// may therefore try to access indices out of bounds.
 fn neighs(adj: &Vec<bool>, l: usize, v: usize) -> Vec<usize> {
     let mut ns = Vec::new();
     for i in 0..l {
@@ -319,7 +352,7 @@ fn neighs(adj: &Vec<bool>, l: usize, v: usize) -> Vec<usize> {
 }
 
 mod tests {
-    // TODO: Write more tests
+    // For some reason rust gives warnings that these imports are unneeded. Removing them leads to compile time errors, though.
     use super::{Collector, URL};
     use std::error::Error;
 
