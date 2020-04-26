@@ -23,7 +23,7 @@ pub const WIKI_ARTICLE_PREFIX_BLACKLIST: [&str; 8] = [
     "Wikipedia:",
     "Special:",
     "File:",
-    "Portal:"
+    "Portal:",
 ];
 
 pub const WIKI_ARTICLE_SUFFIX_BLACKLIST: [&str; 1] = ["_(disambiguation)"];
@@ -53,8 +53,8 @@ pub enum ConfigErr {
 pub struct Config {
     /// Contains a list of URLs to valid Wikipedia articles.
     pub urls: Vec<URL>,
-    /// Contains the depth for the search in the Wikipedia graph.
-    pub depth: u32,
+    ///// Contains the depth for the search in the Wikipedia graph.
+    // pub depth: u32,
 }
 
 impl Config {
@@ -68,14 +68,14 @@ impl Config {
         eprintln!("Creating config");
         // Dropping the name of the executable.
         args.next();
-        // Parsing the depth.
-        let n = match args.next() {
-            Some(arg) => match arg.parse() {
-                Ok(v) => v,
-                Err(_) => return Err(Box::new(ConfigErr::IntParseError(arg))),
-            },
-            None => return Err(Box::new(ConfigErr::TooFewArguments)),
-        };
+        //// Parsing the depth.
+        //let n = match args.next() {
+        //    Some(arg) => match arg.parse() {
+        //        Ok(v) => v,
+        //        Err(_) => return Err(Box::new(ConfigErr::IntParseError(arg))),
+        //    },
+        //    None => return Err(Box::new(ConfigErr::TooFewArguments)),
+        //};
         // Parsing the URL file
         let urls = match args.next() {
             Some(arg) => Config::get_urls(&arg),
@@ -83,7 +83,9 @@ impl Config {
         };
         match urls {
             Err(e) => Err(e),
-            Ok(v) => Ok(Config { urls: v, depth: n }),
+            Ok(v) => Ok(Config {
+                urls: v, /*depth: n */
+            }),
         }
     }
 
